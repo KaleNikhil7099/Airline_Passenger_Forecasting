@@ -15,6 +15,3 @@ venv.bak/
 # IDEs
 .vscode/
 .idea/
-
-# Streamlit
-.streamlit/
