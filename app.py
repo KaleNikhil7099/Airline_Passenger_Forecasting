@@ -27,7 +27,16 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
     /* Global background and typography */
-    .stApp, *:not(i):not(.material-icons) {
+    .stApp {
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+    }
+    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2,
+    .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6,
+    .stMetricValue, .stMetricLabel, .stMetricDelta,
+    label, input, select, textarea, button, td, th,
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span:not([class*="icon"]):not([class*="Icon"]),
+    .stRadio label, .stSlider label, .stSelectbox label {
         font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
     }
     .stApp {
