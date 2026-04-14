@@ -55,26 +55,6 @@ st.markdown("""
         color: #A0AABF !important;
     }
 
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: rgba(22, 25, 34, 0.6);
-        border-radius: 12px;
-        padding: 4px;
-        border: 1px solid #2B313F;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        color: #8A94A6;
-        font-weight: 500;
-        padding: 10px 20px;
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #00ffcc22, #00ffcc11) !important;
-        color: #00ffcc !important;
-        border-bottom: none !important;
-    }
-
     /* Metric cards */
     .metric-container {
         display: flex;
@@ -195,13 +175,6 @@ st.markdown("""
     ::-webkit-scrollbar-thumb { background: #2B313F; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #3B4252; }
 
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        background: #161922 !important;
-        border-radius: 12px !important;
-        color: #A0AABF !important;
-    }
-
     /* Hero section */
     .hero-subtitle {
         text-align: center;
@@ -211,10 +184,6 @@ st.markdown("""
         margin-top: -10px;
         margin-bottom: 5px;
         letter-spacing: 0.2px;
-    }
-    .hero-badges {
-        text-align: center;
-        margin-bottom: 20px;
     }
 
     /* Model metrics table */
@@ -245,6 +214,22 @@ st.markdown("""
     }
     .metrics-table tr:hover td {
         background: #161922;
+    }
+
+    /* Fix expander overlap */
+    .streamlit-expanderHeader {
+        background: #161922 !important;
+        border-radius: 12px !important;
+        color: #A0AABF !important;
+    }
+    [data-testid="stExpander"] {
+        margin-top: 20px !important;
+        margin-bottom: 20px !important;
+    }
+    [data-testid="stExpander"] details {
+        border: 1px solid #2B313F !important;
+        border-radius: 12px !important;
+        background: #0D1017 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -299,6 +284,17 @@ with st.sidebar:
     st.markdown("## ✈️ Control Panel")
     st.markdown("---")
 
+    # PAGE NAVIGATION
+    st.markdown("**📌 Navigation**")
+    current_page = st.radio(
+        "Select a section:",
+        ("🚀 Forecast", "📊 Exploratory Analysis", "🧠 Model Performance", "ℹ️ About"),
+        label_visibility="collapsed"
+    )
+
+    st.markdown("---")
+
+    # FORECAST CONTROLS (always visible)
     forecast_months = st.slider(
         "📅 Forecast Horizon (Months)",
         min_value=1, max_value=60, value=12, step=1,
@@ -341,15 +337,6 @@ st.markdown(
     "</p>",
     unsafe_allow_html=True
 )
-st.markdown(
-    "<div class='hero-badges'>"
-    "<span class='badge badge-green'>LIVE INFERENCE</span>&nbsp;&nbsp;"
-    "<span class='badge badge-blue'>ARIMA</span>&nbsp;&nbsp;"
-    "<span class='badge badge-red'>NEURAL NET</span>&nbsp;&nbsp;"
-    "<span class='badge badge-purple'>PLOTLY INTERACTIVE</span>"
-    "</div>",
-    unsafe_allow_html=True
-)
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # --- Load Models & Run Real-Time Inference ---
@@ -374,13 +361,9 @@ projected_lstm = int(future_lstm.sum())
 avg_monthly_arima = int(future_arima.mean())
 avg_monthly_lstm = int(future_lstm.mean())
 
-# ======================== TABS ========================
-tab_forecast, tab_eda, tab_models, tab_about = st.tabs([
-    "🚀 Forecast", "📊 Exploratory Analysis", "🧠 Model Performance", "ℹ️ About"
-])
 
-# ======================== TAB 1: FORECAST ========================
-with tab_forecast:
+# ======================== PAGE: FORECAST ========================
+if current_page == "🚀 Forecast":
 
     # --- Metrics Row ---
     num_cols = 3 if model_choice == "Compare Both" else 2
@@ -495,9 +478,10 @@ with tab_forecast:
             pct = ((projected_arima - last_year_passengers) / last_year_passengers * 100) if last_year_passengers else 0
             st.metric("Projected Growth", f"{pct:+.1f}%")
 
-    # --- Data Table ---
+    # --- Data Table (with proper spacing to avoid overlap) ---
+    st.markdown("")
+    st.markdown("")
     with st.expander("📊 View Raw Forecast Data", expanded=False):
-        st.markdown("Exportable tabular view of all generated forecast values.")
         view_df = pd.DataFrame({'Date': future_dates})
         if model_choice in ["ARIMA (Statistical)", "Compare Both"]:
             view_df['ARIMA Forecast'] = future_arima
@@ -505,11 +489,12 @@ with tab_forecast:
             view_df['Neural Net Forecast'] = future_lstm
         st.dataframe(
             view_df.style.format({col: "{:,.0f}" for col in view_df.columns if col != 'Date'}),
-            use_container_width=True, hide_index=True
+            width='stretch', hide_index=True
         )
 
-# ======================== TAB 2: EDA ========================
-with tab_eda:
+
+# ======================== PAGE: EDA ========================
+elif current_page == "📊 Exploratory Analysis":
     st.markdown("### 📊 Exploratory Data Analysis")
     st.markdown(
         "<p style='color:#6B7280; margin-bottom:20px;'>"
@@ -521,7 +506,6 @@ with tab_eda:
     eda_col1, eda_col2 = st.columns(2)
 
     with eda_col1:
-        # Full Historical Trend
         st.markdown("#### 📈 Full Historical Trend")
         fig_trend = px.area(
             df_hist, x='Date', y='Passengers',
@@ -535,10 +519,9 @@ with tab_eda:
             height=350
         )
         fig_trend.update_traces(fillcolor='rgba(0,255,204,0.08)', line=dict(width=2))
-        st.plotly_chart(fig_trend, use_container_width=True)
+        st.plotly_chart(fig_trend, width='stretch')
 
     with eda_col2:
-        # Monthly Distribution
         st.markdown("#### 📦 Monthly Distribution (Box Plot)")
         fig_box = px.box(
             df_hist, x='Month', y='Passengers',
@@ -552,12 +535,11 @@ with tab_eda:
             yaxis=dict(showgrid=True, gridcolor='#1E2330', title="Passengers"),
             height=350
         )
-        st.plotly_chart(fig_box, use_container_width=True)
+        st.plotly_chart(fig_box, width='stretch')
 
     eda_col3, eda_col4 = st.columns(2)
 
     with eda_col3:
-        # Year-over-Year Seasonal Pattern
         st.markdown("#### 🔄 Year-over-Year Seasonality")
         fig_season = px.line(
             df_hist, x='Month', y='Passengers', color='Year',
@@ -573,10 +555,9 @@ with tab_eda:
             legend=dict(title="Year", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=350
         )
-        st.plotly_chart(fig_season, use_container_width=True)
+        st.plotly_chart(fig_season, width='stretch')
 
     with eda_col4:
-        # Correlation Heatmap
         st.markdown("#### 🔥 Feature Correlation Heatmap")
         corr_cols = ['Year', 'Month', 'Passengers']
         if 'Trend' in df_hist.columns:
@@ -599,7 +580,7 @@ with tab_eda:
             margin=dict(l=0, r=0, t=10, b=0),
             height=350
         )
-        st.plotly_chart(fig_heat, use_container_width=True)
+        st.plotly_chart(fig_heat, width='stretch')
 
     # Year-wise Aggregated Bar Chart
     st.markdown("#### 📊 Annual Passenger Volume")
@@ -623,18 +604,18 @@ with tab_eda:
         coloraxis_showscale=False,
         height=350
     )
-    st.plotly_chart(fig_bar, use_container_width=True)
+    st.plotly_chart(fig_bar, width='stretch')
 
     # Statistical Summary
     with st.expander("📈 Statistical Summary", expanded=False):
         st.dataframe(
             df_hist[['Passengers', 'Year', 'Month']].describe().T.style.format("{:.1f}"),
-            use_container_width=True
+            width='stretch'
         )
 
 
-# ======================== TAB 3: MODEL PERFORMANCE ========================
-with tab_models:
+# ======================== PAGE: MODEL PERFORMANCE ========================
+elif current_page == "🧠 Model Performance":
     st.markdown("### 🧠 Model Performance & Evaluation")
     st.markdown(
         "<p style='color:#6B7280; margin-bottom:20px;'>"
@@ -718,7 +699,7 @@ with tab_models:
                 legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 height=350
             )
-            st.plotly_chart(fig_comp, use_container_width=True)
+            st.plotly_chart(fig_comp, width='stretch')
 
         # Winner declaration
         if arima_row is not None and lstm_row is not None:
@@ -739,8 +720,8 @@ with tab_models:
         st.info("⚠️ No evaluation metrics found. Run `python src/forecasting.py` to generate metrics.")
 
 
-# ======================== TAB 4: ABOUT ========================
-with tab_about:
+# ======================== PAGE: ABOUT ========================
+elif current_page == "ℹ️ About":
     st.markdown("### ℹ️ About This Project")
 
     st.markdown("""
